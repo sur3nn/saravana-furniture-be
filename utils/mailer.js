@@ -8,14 +8,14 @@ async function sendEnquiryMail({ name, email, mobile, comment, enquiryId }) {
       port: 587,
       secure: false,
       auth: {
-        user: "sanjaykanths912@gmail.com",
-        pass: "biqlbfgzspoosiwl"
+        user: process.env.SENDER_EMAIL,
+        pass: process.env.SENDER_PASS
       },
     });
 
     const mailOptions = {
-      from: `"Product Enquiry" <sanjaykanths912@gmail.com>`,
-      to: email,
+      from: `"Product Enquiry" <${process.env.SENDER_EMAIL}>`,
+      to: process.env.RECEIVER_EMAIL,
       subject: `New Enquiry Received - ID #${enquiryId}`,
       html: `
         <h2>New Enquiry</h2>
