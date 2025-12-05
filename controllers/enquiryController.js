@@ -1,32 +1,42 @@
-const db = require('../config/db')
-const sendEnquiryMail = require('../utils/mailer')
+const db = require('../config/db');
+const sendEnquiryMail = require('../utils/mailer');
 
 exports.saveEnquiry = async (req, res) => {
-    const conn = await db.getConnection()
+    let conn;
     try {
+        conn = await db.getConnection();
         const { name, email, mobile, comment, productMapId } = req.body;
+
         await conn.beginTransaction();
-        const [result1] = await conn.query(`insert into tbl_enquiry (name,email,mobile,comment)values(?,?,?,?)`, [name, email, mobile, comment]);
-      for(id of productMapId) {
-            await conn.query(`insert into tbl_enquiry_product_mapping (product_category_map_id,enquiryId)values(?,?)`, [id, result1.insertId]);
-        }; 
+        const [enquiryResult] = await conn.query(
+            `INSERT INTO tbl_enquiry (name, email, mobile, comment) VALUES (?, ?, ?, ?)`,
+            [name, email, mobile, comment]
+        );
+
+        const enquiryId = enquiryResult.insertId;
+        if (productMapId && productMapId.length > 0) {
+            const values = productMapId.map(id => [id, enquiryId]);
+            await conn.query(
+                `INSERT INTO tbl_enquiry_product_mapping (product_category_map_id, enquiryId) VALUES ?`,
+                [values]
+            );
+        }
+
         await conn.commit();
-         await sendEnquiryMail({
-        name,
-        email,
-        mobile,
-        comment,
-        enquiryId:result1.insertId
-    });
-        res.json({ data: "Sucessfully added" });
+        res.json({ data: "Successfully added", enquiryId });
+        sendEnquiryMail({
+            name,
+            email,
+            mobile,
+            comment,
+            enquiryId
+        }).catch(err => console.error("Mail error:", err));
+
     } catch (e) {
-        await conn.rollback()
-        console.log("error",e);
-        
-         res.json({ data: "Sucessfully failed" ,error:e});
-
-    }finally{
-        conn.release()
+        if (conn) await conn.rollback();
+        console.error("DB error:", e);
+        res.status(500).json({ data: "Failed", error: e.message });
+    } finally {
+        if (conn) conn.release();
     }
-
-}
+};

@@ -1,19 +1,29 @@
-const db = require('../config/db')
+const db = require('../config/db');
 
-exports.getCategories = async(req,res)=>{
-    const conn = await db.getConnection();
-try{
-const [result] =await  conn.query(`select id,name from tbl_category where deletedAt is null`);
-res.json({data:result})
+exports.getCategories = async (req, res) => {
+    let conn;
+    try {
+        conn = await db.getConnection();
+        const [result] = await conn.query(`SELECT id, name FROM tbl_category WHERE deletedAt IS NULL`);
+        res.json({ data: result });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ data: "failed", error: e.message });
+    } finally {
+        if (conn) conn.release();
+    }
+};
 
-}catch(e){res.json({data:`successfuly failed ${e}`})}
-}
-
-exports.getMaterials = async(req,res)=>{
-    const conn = await db.getConnection();
-try{
-const [result] =await  conn.query(`select id,name from tbl_material where deletedAt is null`);
-res.json({data:result})
-
-}catch(e){res.json({data:`successfuly failed ${e}`})}
-}
+exports.getMaterials = async (req, res) => {
+    let conn;
+    try {
+        conn = await db.getConnection();
+        const [result] = await conn.query(`SELECT id, name FROM tbl_material WHERE deletedAt IS NULL`);
+        res.json({ data: result });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ data: "failed", error: e.message });
+    } finally {
+        if (conn) conn.release();
+    }
+};
